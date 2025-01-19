@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <!-- Corrected Water CSS Link -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.0/dist/sweetalert2.min.css"> -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@5/dark.css" />
+    <style>
+        /* Additional Styles for the Table */
+        .actions a {
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        .actions a:hover {
+            text-decoration: underline;
+        }
+
+        .delete-link {
+            color: red;
+        }
+
+        .delete-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Todo List</h1>
+
+        <!-- Button to create a new task -->
+        <button class="btn" onclick="createTaskPrompt()">Create New Task</button>
+
+        <!-- Table to display tasks -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr id="task-{{ task.id }}">
+                    <td id="task-title-{{ task.id }}">{{ task.title }}</td>
+                    <td class="actions">
+                        <a href="#" onclick="updateTaskPrompt('{{ task.id }}')">Edit</a> |
+                        <a href="#" class="delete-link" onclick="deleteTask('{{ task.id }}')"
+                            style="color: rgb(234, 60, 60);">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+    <script>
+        // Create Task Prompt
+        function createTaskPrompt() {
+            Swal.fire({
+                title: 'Create New Task',
+                input: 'text',
+                inputLabel: 'Task Title',
+                inputPlaceholder: 'Enter task title',
+                showCancelButton: true,
+                confirmButtonText: 'Create',
+                preConfirm: (taskTitle) => {
+                    if (taskTitle) {
+                        fetch('/task', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: 'task_title=' + taskTitle
+                        }).then(response => {
+                            window.location.reload();  // Reload the page after task is created
+                        });
+                    }
+                }
+            });
+        }
+
+        // Update Task Prompt
+        function updateTaskPrompt(taskId) {
+            const taskTitle = document.getElementById('task-title-' + taskId).innerText;
+            Swal.fire({
+                title: 'Update Task',
+                input: 'text',
+                inputLabel: 'Task Title',
+                inputValue: taskTitle,
+                inputPlaceholder: 'Enter new task title',
+                showCancelButton: true,
+                confirmButtonText: 'Update',
+                preConfirm: (newTaskTitle) => {
+                    if (newTaskTitle) {
+                        fetch('/task/' + taskId, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: 'task_title=' + newTaskTitle
+                        }).then(response => {
+                            window.location.reload();  // Reload the page after task is updated
+                        });
+                    }
+                }
+            });
+        }
+
+        // Delete Task
+        function deleteTask(taskId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This task will be deleted!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                preConfirm: () => {
+                    fetch('/task/' + taskId, {
+                        method: 'DELETE',
+                    }).then(response => {
+                        if (response.ok) {
+                            document.getElementById('task-' + taskId).remove();
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
